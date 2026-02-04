@@ -1,3 +1,13 @@
-# إعدادات لتعطيل الروابط النسبية لتسريع البناء ومنع التوقف
+# تجاهل الملفات والمجلدات التي تسبب بطء أو تعليق البناء
+exclude:
+  - node_modules
+  - vendor
+  - .github
+  - Gemfile
+  - Gemfile.lock
+  - package.json
+  - package-lock.json
+
+# محاولة تعطيل الروابط النسبية مرة أخرى (تأكد من المسافات)
 relative_links:
   enabled: false
