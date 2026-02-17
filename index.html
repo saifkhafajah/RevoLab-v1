@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RevoLab | Robot Arm Simulator</title>
+    <title>RevoLab | Industrial Robotics Simulator</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         :root {
@@ -28,20 +28,25 @@
             line-height: 1.6;
         }
 
-        /* --- Background Grid Effect --- */
-        .bg-grid {
+        /* --- Dynamic Background --- */
+        #bg-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: -1;
+            z-index: -2;
+            opacity: 0.8; /* Increased opacity for better visibility */
         }
+
+        /* Overlay to fade grid into darkness at the top */
+        .bg-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 20%, var(--bg-body) 95%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .bg-glow {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 60vw; height: 60vh;
-            background: radial-gradient(circle, rgba(255, 145, 0, 0.05) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 145, 0, 0.08) 0%, transparent 70%);
             z-index: -1;
             pointer-events: none;
         }
@@ -49,21 +54,25 @@
         /* --- Navigation --- */
         nav {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 40px;
+            padding: 15px 40px;
             border-bottom: 1px solid var(--border);
             background: rgba(5, 5, 5, 0.8);
             backdrop-filter: blur(10px);
             position: sticky; top: 0; z-index: 100;
         }
 
-        .logo {
-            display: flex; align-items: center; gap: 10px;
-            font-size: 20px; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase;
+        /* Brand Logo with Image */
+        .brand-logo {
+            display: flex; align-items: center; gap: 12px;
+            text-decoration: none;
         }
-        .logo::before {
-            content: ''; display: block; width: 12px; height: 12px;
-            background: var(--accent); border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent);
+        .brand-logo img {
+            height: 40px; /* Adjust based on your logo aspect ratio */
+            width: auto;
+            object-fit: contain;
+        }
+        .brand-text {
+            font-size: 20px; font-weight: 800; letter-spacing: 1px; color: #fff; text-transform: uppercase;
         }
 
         .nav-links { display: flex; gap: 30px; }
@@ -192,15 +201,20 @@
 </head>
 <body>
 
-    <div class="bg-grid"></div>
+    <!-- Dynamic Canvas Background (Simulates Video) -->
+    <canvas id="bg-canvas"></canvas>
+    <div class="bg-overlay"></div>
     <div class="bg-glow"></div>
 
     <nav>
-        <div class="logo">REVOLAB</div>
+        <a href="#" class="brand-logo">
+            <!-- Customized Logo Image -->
+            <img src="assets/LOGO-01-01.png" alt="REVOLAB Logo">
+            <span class="brand-text">REVOLAB</span>
+        </a>
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#integration">Integration</a>
-            <a href="#docs">Documentation</a>
         </div>
         <a href="revolab_simulator.html" class="btn-launch">
             Launch App <i class="ph ph-rocket-launch"></i>
@@ -208,7 +222,7 @@
     </nav>
 
     <section class="hero">
-        <div class="status-pill"><div class="status-dot"></div> Version 1.0 Live</div>
+        <div class="status-pill"><div class="status-dot"></div> Version 5.2 Live</div>
         <h1>The Operating System<br>for Industrial Robotics.</h1>
         <p>
             Simulate, program, and vibe-code your automation workflows in the browser. 
@@ -218,8 +232,8 @@
             <a href="revolab_simulator.html" class="btn-launch" style="font-size: 14px; padding: 15px 30px;">
                 Start Simulating
             </a>
-            <a href="#docs" class="btn-outline">
-                Read the Docs
+            <a href="#features" class="btn-outline">
+                Explore Features
             </a>
         </div>
     </section>
@@ -298,13 +312,71 @@
     <footer>
         <div class="footer-links">
             <a href="#">GitHub</a>
-            <a href="#">Documentation</a>
             <a href="#">Twitter</a>
             <a href="#">Contact</a>
         </div>
         <p>&copy; 2025 RevoLab Simulation Systems. All rights reserved.</p>
     </footer>
 
+    <script>
+        // --- Moving Grid Background Script ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let offset = 0;
+        
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.lineWidth = 2; // Thicker lines
+            ctx.strokeStyle = 'rgba(255, 145, 0, 0.3)'; // Brighter base vertical lines
+
+            const PERSPECTIVE = height * 0.4;
+            const GRID_SIZE = 60;
+            const SPEED = 0.5;
+
+            offset = (offset + SPEED) % GRID_SIZE;
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Vertical Lines (Perspective)
+            for (let i = -width; i < width * 2; i += GRID_SIZE * 2) {
+                ctx.beginPath();
+                ctx.moveTo(i, height);
+                ctx.lineTo(centerX + (i - centerX) * 0.1, 0); // Converge to top center
+                ctx.stroke();
+            }
+
+            // Horizontal Lines (Moving)
+            for (let i = 0; i < height; i += GRID_SIZE * 0.5) {
+                // Calculate y position with perspective spacing
+                // Simple linear movement for retro feel
+                let y = i + offset; 
+                if(y > height) y -= height;
+                
+                // Opacity fades out at top - Increased visibility factor
+                const alpha = (y / height) * 0.6; 
+                ctx.strokeStyle = `rgba(255, 145, 0, ${alpha})`;
+
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(drawGrid);
+        }
+
+        drawGrid();
+    </script>
+
 </body>
 </html>
-
